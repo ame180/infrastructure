@@ -15,3 +15,4 @@ Below is a list of images managed in this repository. Each image has its own dir
   - **Environment Variables**:
     - `APP_PATH`: The root directory of the application (default: `/app`).
 - **mariadb**: A MariaDB instance optimized for minimal base memory usage.
+  - **Tags**: `latest` (MariaDB 11) and `12.3` (current LTS series). A series tag follows patch releases and config changes, but never moves to another series.

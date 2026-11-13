@@ -3,6 +3,8 @@ name: Weekly Build
 on:
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -15,10 +17,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image:
-          - nginx-node
-          - nginx-php
-          - mariadb
+        include:
+          - image: nginx-node
+            tag: latest
+          - image: nginx-php
+            tag: latest
+          - image: mariadb
+            tag: latest
+          # Pinned release series: moves with patch releases and config changes, never across series.
+          - image: mariadb
+            tag: '12.3'
+            build-args: MARIADB_VERSION=12.3
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,13 +42,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push ${{ matrix.image }}
+      - name: Build and push ${{ matrix.image }}:${{ matrix.tag }}
         uses: docker/build-push-action@v6
         with:
           context: ./${{ matrix.image }}
           file: ./${{ matrix.image }}/Dockerfile
           push: true
           pull: true
-          tags: ghcr.io/ame180/${{ matrix.image }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: ${{ matrix.build-args }}
+          tags: ghcr.io/ame180/${{ matrix.image }}:${{ matrix.tag }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.tag }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.tag }}
